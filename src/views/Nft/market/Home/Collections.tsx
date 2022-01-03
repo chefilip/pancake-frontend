@@ -1,7 +1,7 @@
 import React from 'react'
 import orderBy from 'lodash/orderBy'
 import { Button, ChevronRightIcon, Flex, Grid, Heading, Text } from '@pancakeswap/uikit'
-import { Link } from 'react-router-dom'
+import { NextLinkFromReactRouter } from 'components/NextLink'
 import { useGetCollections } from 'state/nftMarket/hooks'
 import { nftsBaseUrl } from 'views/Nft/market/constants'
 import { useTranslation } from 'contexts/Localization'
@@ -25,7 +25,7 @@ const Collections = () => {
           {t('Hot Collections')}
         </Heading>
         <Button
-          as={Link}
+          as={NextLinkFromReactRouter}
           to={`${nftsBaseUrl}/collections/`}
           variant="secondary"
           scale="sm"

@@ -1,8 +1,8 @@
 import React, { useContext, useState } from 'react'
 import styled from 'styled-components'
-import { AutoRenewIcon, Button, Card, CardBody, Heading, Text } from '@pancakeswap/uikit'
+import { AutoRenewIcon, Button, Card, CardBody, Heading, Text, Link as UILink } from '@pancakeswap/uikit'
 import { useWeb3React } from '@web3-react/core'
-import { Link as RouterLink } from 'react-router-dom'
+import NextLink from 'next/link'
 import { getPancakeProfileAddress } from 'utils/addressHelpers'
 import { getErc721Contract } from 'utils/contractHelpers'
 import { useTranslation } from 'contexts/Localization'
@@ -16,7 +16,7 @@ import SelectionCard from './SelectionCard'
 import NextStepButton from './NextStepButton'
 import { ProfileCreationContext } from './contexts/ProfileCreationProvider'
 
-const Link = styled(RouterLink)`
+const Link = styled(UILink)`
   color: ${({ theme }) => theme.colors.primary};
 `
 
@@ -88,9 +88,11 @@ const ProfilePicture: React.FC = () => {
           </Text>
           <Text as="p" color="textSubtle" mb="24px">
             {t('Only approved Pancake Collectibles can be used.')}
-            <Link to={`${nftsBaseUrl}/collections`} style={{ marginLeft: '4px' }}>
-              {t('See the list >')}
-            </Link>
+            <NextLink href={`${nftsBaseUrl}/collections`} passHref>
+              <Link href={`${nftsBaseUrl}/collections`} style={{ marginLeft: '4px' }}>
+                {t('See the list >')}
+              </Link>
+            </NextLink>
           </Text>
           <NftWrapper>
             {nfts

@@ -7,8 +7,8 @@ import { BASE_ADD_LIQUIDITY_URL } from 'config'
 import { useTranslation } from 'contexts/Localization'
 import { useERC20 } from 'hooks/useContract'
 import useToast from 'hooks/useToast'
+import { useRouter } from 'next/router'
 import React, { useCallback, useState } from 'react'
-import { useLocation } from 'react-router-dom'
 import { useAppDispatch } from 'state'
 import { fetchFarmUserDataAsync } from 'state/farms'
 import { useFarmUser, useLpTokenPrice, usePriceCakeBusd } from 'state/farms/hooks'
@@ -54,7 +54,7 @@ const Staked: React.FunctionComponent<StackedActionProps> = ({
   const { allowance, tokenBalance, stakedBalance } = useFarmUser(pid)
   const { onStake } = useStakeFarms(pid)
   const { onUnstake } = useUnstakeFarms(pid)
-  const location = useLocation()
+  const router = useRouter()
   const lpPrice = useLpTokenPrice(lpSymbol)
   const cakePrice = usePriceCakeBusd()
 
@@ -171,7 +171,7 @@ const Staked: React.FunctionComponent<StackedActionProps> = ({
               <IconButton
                 variant="secondary"
                 onClick={onPresentDeposit}
-                disabled={['history', 'archived'].some((item) => location.pathname.includes(item))}
+                disabled={['history', 'archived'].some((item) => router.pathname.includes(item))}
               >
                 <AddIcon color="primary" width="14px" />
               </IconButton>
@@ -196,7 +196,7 @@ const Staked: React.FunctionComponent<StackedActionProps> = ({
             width="100%"
             onClick={onPresentDeposit}
             variant="secondary"
-            disabled={['history', 'archived'].some((item) => location.pathname.includes(item))}
+            disabled={['history', 'archived'].some((item) => router.pathname.includes(item))}
           >
             {t('Stake LP')}
           </Button>

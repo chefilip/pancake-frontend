@@ -1,6 +1,6 @@
 import React from 'react'
 import { Image, Flex, Text, Td, IconButton, Link, OpenNewIcon, useMatchBreakpoints, useModal } from '@pancakeswap/uikit'
-import { Link as RouterLink } from 'react-router-dom'
+import { NextLinkFromReactRouter } from 'components/NextLink'
 import { Activity, NftToken } from 'state/nftMarket/types'
 import { Price } from '@pancakeswap/sdk'
 import styled from 'styled-components'
@@ -71,7 +71,7 @@ const ActivityRow: React.FC<ActivityRowProps> = ({
             },
           })}
         >
-          <RouterLink to={nft ? `${nftsBaseUrl}/collections/${nft.collectionAddress}/${tokenId}` : ``}>
+          <NextLinkFromReactRouter to={nft ? `${nftsBaseUrl}/collections/${nft.collectionAddress}/${tokenId}` : ``}>
             <Flex justifyContent="flex-start" alignItems="center" flexDirection={['column', null, 'row']}>
               <RoundedImage
                 src={nft?.image.thumbnail}
@@ -90,7 +90,7 @@ const ActivityRow: React.FC<ActivityRowProps> = ({
                 </Text>
               </Flex>
             </Flex>
-          </RouterLink>
+          </NextLinkFromReactRouter>
         </Td>
       ) : null}
       <Td>
