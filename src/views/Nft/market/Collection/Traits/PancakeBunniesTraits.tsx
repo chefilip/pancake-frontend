@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Skeleton, Table, Td, Th, Flex, ArrowUpIcon, ArrowDownIcon } from '@pancakeswap/uikit'
-import { useHistory } from 'react-router'
 import times from 'lodash/times'
 import sum from 'lodash/sum'
+import { useRouter } from 'next/router'
 import { formatNumber } from 'utils/formatBalance'
 import { getNftsFromCollectionApi } from 'state/nftMarket/helpers'
 import { ApiResponseCollectionTokens } from 'state/nftMarket/types'
@@ -41,7 +41,7 @@ const PancakeBunniesTraits: React.FC<PancakeBunniesTraitsProps> = ({ collectionA
   const [tokenApiResponse, setTokenApiResponse] = useState<ApiResponseCollectionTokens>(null)
   const [raritySort, setRaritySort] = useState<SortType>('asc')
   const { t } = useTranslation()
-  const { push } = useHistory()
+  const { push } = useRouter()
 
   useEffect(() => {
     const fetchTokens = async () => {
