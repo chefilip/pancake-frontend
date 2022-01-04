@@ -370,7 +370,7 @@ export default function Swap() {
             currentSwapPrice={singleTokenPrice}
           />
         )}
-        {/* <BottomDrawer
+        <BottomDrawer
           content={
             <PriceChartContainer
               inputCurrencyId={inputCurrencyId}
@@ -386,7 +386,7 @@ export default function Swap() {
           }
           isOpen={isChartDisplayed}
           setIsOpen={setIsChartDisplayed}
-        /> */}
+        />
         <Flex flexDirection="column">
           <StyledSwapContainer $isChartExpanded={isChartExpanded}>
             <StyledInputCurrencyWrapper mt={isChartExpanded ? '24px' : '0'}>
