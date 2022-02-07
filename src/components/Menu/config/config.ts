@@ -32,6 +32,10 @@ const config: (t: ContextApi['t']) => ConfigMenuItemsType[] = (t) => [
         label: t('Liquidity'),
         href: '/liquidity',
       },
+      {
+        label: t('Limit Orders'),
+        href: '/limit-orders',
+      },
     ],
   },
   {
