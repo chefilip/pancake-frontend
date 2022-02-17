@@ -5,7 +5,7 @@ import { TransactionReceipt, TransactionResponse } from '@ethersproject/provider
 import { ToastDescriptionWithTx } from 'components/Toast'
 
 import useToast from 'hooks/useToast'
-import { logError, isUserRejected } from 'utils/sentry'
+import { isUserRejected } from 'utils/sentry'
 
 export type TxResponse = TransactionResponse | null
 
@@ -35,7 +35,8 @@ export default function useCatchTxError(): CatchTxErrorReturn {
 
   const handleNormalError = useCallback(
     (error, tx?: TxResponse) => {
-      logError(error)
+      // Comment out to avoid reaching to Sentry limit
+      // logError(error)
 
       if (tx) {
         toastError(
@@ -84,7 +85,7 @@ export default function useCatchTxError(): CatchTxErrorReturn {
                 if (isGasEstimationError(err)) {
                   handleNormalError(error, tx)
                 } else {
-                  logError(err)
+                  // logError(err)
 
                   let recursiveErr = err
 
