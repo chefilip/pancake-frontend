@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, memo } from 'react'
 import { Table, Th, Td, useMatchBreakpoints } from '@pancakeswap/uikit'
+import { useGelatoLimitOrdersHistory } from 'hooks/limitOrders/useGelatoLimitOrdersHistory'
 
 import Navigation from 'components/TableNavigation'
 import { useTranslation } from 'contexts/Localization'
@@ -11,11 +12,12 @@ import FullRow from './FullRow'
 
 const ORDERS_PER_PAGE = 5
 
-const HistoryOrderTable: React.FC<LimitOrderTableProps> = ({ isChartDisplayed, orders }) => {
+const HistoryOrderTable: React.FC<LimitOrderTableProps> = ({ isChartDisplayed }) => {
   const { isTablet } = useMatchBreakpoints()
   const { t } = useTranslation()
   const [page, setPage] = useState(1)
   const compactMode = !isChartDisplayed || isTablet
+  const orders = useGelatoLimitOrdersHistory()
 
   const maxPage = useMemo(() => {
     if (orders?.length) {
@@ -79,4 +81,4 @@ const HistoryOrderTable: React.FC<LimitOrderTableProps> = ({ isChartDisplayed, o
   )
 }
 
-export default HistoryOrderTable
+export default memo(HistoryOrderTable)

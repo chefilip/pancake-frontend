@@ -1,168 +1,114 @@
-import { useCallback, useEffect, useState } from 'react'
 import { Order } from '@gelatonetwork/limit-orders-lib'
 import useActiveWeb3React from 'hooks/useActiveWeb3React'
-import { useAllTransactions } from 'state/transactions/hooks'
+import useSWR from 'swr'
+import { SLOW_INTERVAL } from 'config/constants'
+
 import { getLSOrders, saveOrder } from 'utils/localStorageOrders'
-import useInterval from '../useInterval'
 import useGelatoLimitOrdersLib from './useGelatoLimitOrdersLib'
 
-export interface GelatoLimitOrdersHistory {
-  open: { pending: Order[]; confirmed: Order[] }
-  cancelled: { pending: Order[]; confirmed: Order[] }
-  executed: Order[]
-}
 function newOrdersFirst(a: Order, b: Order) {
   return Number(b.updatedAt) - Number(a.updatedAt)
 }
 
-export default function useGelatoLimitOrdersHistory(includeOrdersWithNullHandler = false): GelatoLimitOrdersHistory {
+function syncOrderToLocalStorage({ chainId, account, orders }) {
+  const ordersLS = getLSOrders(chainId, account)
+
+  orders.forEach((order: Order) => {
+    const orderExists = ordersLS.find((confOrder) => confOrder.id.toLowerCase() === order.id.toLowerCase())
+
+    if (!orderExists || (orderExists && Number(orderExists.updatedAt) < Number(order.updatedAt))) {
+      saveOrder(chainId, account, order)
+    }
+  })
+}
+
+export function useGelatoOpenLimitOrders(): Order[] {
   const { account, chainId } = useActiveWeb3React()
 
   const gelatoLimitOrders = useGelatoLimitOrdersLib()
 
-  const [openOrders, setOpenOrders] = useState<{
-    pending: Order[]
-    confirmed: Order[]
-  }>({ pending: [], confirmed: [] })
-  const [cancelledOrders, setCancelledOrders] = useState<{
-    pending: Order[]
-    confirmed: Order[]
-  }>({ pending: [], confirmed: [] })
-  const [executedOrders, setExecutedOrders] = useState<Order[]>([])
+  const { data } = useSWR(
+    gelatoLimitOrders && account && chainId ? ['gelato', 'openOrders'] : null,
+    async () => {
+      try {
+        const orders = await gelatoLimitOrders.getOpenOrders(account.toLowerCase(), false)
 
-  const transactions = useAllTransactions()
-
-  const fetchOpenOrders = useCallback(() => {
-    if (gelatoLimitOrders && account && chainId)
-      gelatoLimitOrders
-        .getOpenOrders(account.toLowerCase(), includeOrdersWithNullHandler)
-        .then(async (orders) => {
-          const ordersLS = getLSOrders(chainId, account)
-
-          orders.forEach((order: Order) => {
-            const orderExists = ordersLS.find((confOrder) => confOrder.id.toLowerCase() === order.id.toLowerCase())
-
-            if (!orderExists || (orderExists && Number(orderExists.updatedAt) < Number(order.updatedAt))) {
-              saveOrder(chainId, account, order)
-            }
-          })
-
-          const openOrdersLS = getLSOrders(chainId, account).filter((order) => order.status === 'open')
-
-          const pendingOrdersLS = getLSOrders(chainId, account, true)
-
-          setOpenOrders({
-            confirmed: openOrdersLS
-              .filter((order: Order) => {
-                const orderCancelled = pendingOrdersLS
-                  .filter((pendingOrder) => pendingOrder.status === 'cancelled')
-                  .find((pendingOrder) => pendingOrder.id.toLowerCase() === order.id.toLowerCase())
-                return !orderCancelled
-              })
-              .sort(newOrdersFirst),
-            pending: pendingOrdersLS.filter((order) => order.status === 'open').sort(newOrdersFirst),
-          })
+        syncOrderToLocalStorage({
+          orders,
+          chainId,
+          account,
         })
-        .catch((e) => {
-          console.error('Error fetching open orders from subgraph', e)
-          const openOrdersLS = getLSOrders(chainId, account).filter((order) => order.status === 'open')
+      } catch (e) {
+        console.error('Error fetching open orders from subgraph', e)
+      }
 
-          const pendingOrdersLS = getLSOrders(chainId, account, true)
+      const openOrdersLS = getLSOrders(chainId, account).filter((order) => order.status === 'open')
 
-          setOpenOrders({
-            confirmed: openOrdersLS
-              .filter((order: Order) => {
-                const orderCancelled = pendingOrdersLS
-                  .filter((pendingOrder) => pendingOrder.status === 'cancelled')
-                  .find((pendingOrder) => pendingOrder.id.toLowerCase() === order.id.toLowerCase())
-                return !orderCancelled
-              })
-              .sort(newOrdersFirst),
-            pending: pendingOrdersLS.filter((order) => order.status === 'open').sort(newOrdersFirst),
+      const pendingOrdersLS = getLSOrders(chainId, account, true)
+
+      return [
+        ...openOrdersLS
+          .filter((order: Order) => {
+            const orderCancelled = pendingOrdersLS
+              .filter((pendingOrder) => pendingOrder.status === 'cancelled')
+              .find((pendingOrder) => pendingOrder.id.toLowerCase() === order.id.toLowerCase())
+            return !orderCancelled
           })
+          .sort(newOrdersFirst),
+        ...pendingOrdersLS.filter((order) => order.status === 'open').sort(newOrdersFirst),
+      ]
+    },
+    {
+      refreshInterval: SLOW_INTERVAL,
+    },
+  )
+
+  return data
+}
+
+export function useGelatoLimitOrdersHistory(): Order[] {
+  const { account, chainId } = useActiveWeb3React()
+  const gelatoLimitOrders = useGelatoLimitOrdersLib()
+
+  const { data } = useSWR(
+    gelatoLimitOrders && account && chainId ? ['gelato', 'cancelledOrders'] : null,
+    async () => {
+      try {
+        const acc = account.toLowerCase()
+
+        const [canOrders, exeOrders] = await Promise.all([
+          gelatoLimitOrders.getCancelledOrders(acc, false),
+          gelatoLimitOrders.getExecutedOrders(acc, false),
+        ])
+
+        syncOrderToLocalStorage({
+          orders: [...canOrders, ...exeOrders],
+          chainId,
+          account,
         })
-  }, [gelatoLimitOrders, account, chainId, includeOrdersWithNullHandler])
+      } catch (e) {
+        console.error('Error fetching history orders from subgraph', e)
+      }
 
-  const fetchCancelledOrders = useCallback(() => {
-    if (gelatoLimitOrders && account && chainId)
-      gelatoLimitOrders
-        .getCancelledOrders(account.toLowerCase(), includeOrdersWithNullHandler)
-        .then(async (orders) => {
-          const ordersLS = getLSOrders(chainId, account)
+      const executedOrdersLS = getLSOrders(chainId, account).filter((order) => order.status === 'executed')
 
-          orders.forEach((order: Order) => {
-            const orderExists = ordersLS.find((confOrder) => confOrder.id.toLowerCase() === order.id.toLowerCase())
-            if (!orderExists || (orderExists && Number(orderExists.updatedAt) < Number(order.updatedAt))) {
-              saveOrder(chainId, account, order)
-            }
-          })
+      const cancelledOrdersLS = getLSOrders(chainId, account).filter((order) => order.status === 'cancelled')
 
-          const cancelledOrdersLS = getLSOrders(chainId, account).filter((order) => order.status === 'cancelled')
+      const pendingCancelledOrdersLS = getLSOrders(chainId, account, true).filter(
+        (order) => order.status === 'cancelled',
+      )
 
-          const pendingCancelledOrdersLS = getLSOrders(chainId, account, true).filter(
-            (order) => order.status === 'cancelled',
-          )
+      // TODO: add sort by date
+      return [
+        ...pendingCancelledOrdersLS.sort(newOrdersFirst),
+        ...cancelledOrdersLS.sort(newOrdersFirst),
+        ...executedOrdersLS.sort(newOrdersFirst),
+      ]
+    },
+    {
+      refreshInterval: SLOW_INTERVAL,
+    },
+  )
 
-          setCancelledOrders({
-            confirmed: cancelledOrdersLS.sort(newOrdersFirst),
-            pending: pendingCancelledOrdersLS.sort(newOrdersFirst),
-          })
-        })
-        .catch((e) => {
-          console.error('Error fetching cancelled orders from subgraph', e)
-
-          const cancelledOrdersLS = getLSOrders(chainId, account).filter((order) => order.status === 'cancelled')
-
-          const pendingCancelledOrdersLS = getLSOrders(chainId, account, true).filter(
-            (order) => order.status === 'cancelled',
-          )
-
-          setCancelledOrders({
-            confirmed: cancelledOrdersLS.sort(newOrdersFirst),
-            pending: pendingCancelledOrdersLS.sort(newOrdersFirst),
-          })
-        })
-  }, [gelatoLimitOrders, account, chainId, includeOrdersWithNullHandler])
-
-  const fetchExecutedOrders = useCallback(() => {
-    if (gelatoLimitOrders && account && chainId)
-      gelatoLimitOrders
-        .getExecutedOrders(account.toLowerCase(), includeOrdersWithNullHandler)
-        .then(async (orders) => {
-          const ordersLS = getLSOrders(chainId, account)
-
-          orders.forEach((order: Order) => {
-            const orderExists = ordersLS.find((confOrder) => confOrder.id.toLowerCase() === order.id.toLowerCase())
-            if (!orderExists || (orderExists && Number(orderExists.updatedAt) < Number(order.updatedAt))) {
-              saveOrder(chainId, account, order)
-            }
-          })
-
-          const executedOrdersLS = getLSOrders(chainId, account).filter((order) => order.status === 'executed')
-
-          setExecutedOrders(executedOrdersLS.sort(newOrdersFirst))
-        })
-        .catch((e) => {
-          console.error('Error fetching executed orders from subgraph', e)
-          const executedOrdersLS = getLSOrders(chainId, account).filter((order) => order.status === 'executed')
-
-          setExecutedOrders(executedOrdersLS.sort(newOrdersFirst))
-        })
-  }, [gelatoLimitOrders, account, chainId, includeOrdersWithNullHandler])
-
-  useEffect(() => {
-    fetchOpenOrders()
-    fetchCancelledOrders()
-    fetchExecutedOrders()
-  }, [fetchCancelledOrders, fetchExecutedOrders, fetchOpenOrders, transactions])
-
-  useInterval(fetchOpenOrders, 60000)
-  useInterval(fetchCancelledOrders, 60000)
-  useInterval(fetchExecutedOrders, 60000)
-
-  return {
-    open: openOrders,
-    cancelled: cancelledOrders,
-    executed: executedOrders,
-  }
+  return data
 }

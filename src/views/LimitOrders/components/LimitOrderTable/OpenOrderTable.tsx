@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, memo } from 'react'
 import { Table, Th, Td, useMatchBreakpoints } from '@pancakeswap/uikit'
+import { useGelatoOpenLimitOrders } from 'hooks/limitOrders/useGelatoLimitOrdersHistory'
 
 import { useTranslation } from 'contexts/Localization'
 import Navigation from 'components/TableNavigation'
@@ -11,11 +12,12 @@ import FullRow from './FullRow'
 
 const ORDERS_PER_PAGE = 5
 
-const OpenOrderTable: React.FC<LimitOrderTableProps> = ({ isChartDisplayed, orders }) => {
+const OpenOrderTable: React.FC<LimitOrderTableProps> = ({ isChartDisplayed }) => {
   const { isTablet } = useMatchBreakpoints()
   const [page, setPage] = useState(1)
   const compactMode = !isChartDisplayed || isTablet
   const { t } = useTranslation()
+  const orders = useGelatoOpenLimitOrders()
 
   const maxPage = useMemo(() => {
     if (orders?.length) {
@@ -80,4 +82,4 @@ const OpenOrderTable: React.FC<LimitOrderTableProps> = ({ isChartDisplayed, orde
   )
 }
 
-export default OpenOrderTable
+export default memo(OpenOrderTable)
