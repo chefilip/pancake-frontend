@@ -14,11 +14,7 @@ const LimitOrderTable: React.FC<{ isChartDisplayed: boolean }> = ({ isChartDispl
     <Flex mt={isChartDisplayed ? ['56px', '56px', '56px', '24px'] : '24px'} width="100%" justifyContent="center">
       <Card style={{ width: isChartDisplayed ? '50%' : '328px' }}>
         <OrderTab onItemClick={handleClick} activeIndex={activeTab} />
-        {TAB_TYPE.Open === activeTab ? (
-          <OpenOrderTable isChartDisplayed={isChartDisplayed} />
-        ) : (
-          <HistoryOrderTable isChartDisplayed={isChartDisplayed} />
-        )}
+        {TAB_TYPE.Open === activeTab ? <OpenOrderTable /> : <HistoryOrderTable />}
       </Card>
       {isChartDisplayed && <Box width="328px" mx={['24px', '24px', '24px', '40px']} />}
     </Flex>
