@@ -328,9 +328,11 @@ const LimitOrders = () => {
           </StyledSwapContainer>
         </Flex>
       </Flex>
-      <div style={{ width: '100%' }}>
-        <LimitOrderTable isChartDisplayed={false} />
-      </div>
+      {account && (
+        <div style={{ width: '100%' }}>
+          <LimitOrderTable isChartDisplayed={false} />
+        </div>
+      )}
     </Page>
   )
 }

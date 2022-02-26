@@ -9,6 +9,7 @@ import NoOrderTable from './NoOrderTable'
 import { LimitOrderTableProps } from './types'
 import HeaderCellStyle from './HeaderCellStyle'
 import FullRow from './FullRow'
+import LoadingTable from './LoadingTable'
 
 const ORDERS_PER_PAGE = 5
 
@@ -33,6 +34,8 @@ const OpenOrderTable: React.FC<LimitOrderTableProps> = ({ isChartDisplayed }) =>
   const onPagePrev = () => {
     setPage((currentPage) => (currentPage === 1 ? currentPage : currentPage - 1))
   }
+
+  if (!orders) return <LoadingTable />
 
   if (!orders?.length) {
     return <NoOrderTable />
