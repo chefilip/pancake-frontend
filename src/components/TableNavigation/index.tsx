@@ -1,3 +1,4 @@
+import { useState, useMemo, useCallback, ReactElement } from 'react'
 import { Text, ArrowBackIcon, ArrowForwardIcon } from '@pancakeswap/uikit'
 import styled from 'styled-components'
 import { useTranslation } from 'contexts/Localization'
@@ -19,18 +20,51 @@ export const Arrow = styled.div`
   }
 `
 
-interface TableNavigationProps {
-  currentPage: number
-  maxPage: number
-  onPagePrev: () => void
-  onPageNext: () => void
+interface ExposedProps {
+  paginatedData: any[]
 }
 
-const TableNavigation: React.FC<TableNavigationProps> = ({ currentPage = 1, maxPage = 1, onPagePrev, onPageNext }) => {
+interface TableNavigationProps {
+  data: any[]
+  itemsPerPage?: number
+  children: (exposedProps: ExposedProps) => ReactElement
+}
+
+const ORDERS_PER_PAGE = 5
+
+const TableNavigation: React.FC<TableNavigationProps> = ({ data, itemsPerPage = ORDERS_PER_PAGE, children }) => {
   const { t } = useTranslation()
+  const [currentPage, setPage] = useState(1)
+
+  const total = Array.isArray(data) ? data.length : 0
+
+  const maxPage = useMemo(() => {
+    if (total) {
+      return Math.ceil(total / itemsPerPage)
+    }
+    return 1
+  }, [total, itemsPerPage])
+
+  const onPageNext = useCallback(() => {
+    setPage((page) => (page === maxPage ? page : page + 1))
+  }, [maxPage])
+
+  const onPagePrev = useCallback(() => {
+    setPage((page) => (page === 1 ? page : page - 1))
+  }, [])
+
+  const from = useMemo(() => itemsPerPage * (currentPage - 1), [currentPage, itemsPerPage])
+  const to = useMemo(() => itemsPerPage * currentPage, [currentPage, itemsPerPage])
+
+  const paginatedData = useMemo(() => {
+    return Array.isArray(data) ? data.slice(from, to) : []
+  }, [data, from, to])
 
   return (
     <>
+      {children({
+        paginatedData,
+      })}
       <PageButtons>
         <Arrow onClick={onPagePrev}>
           <ArrowBackIcon color={currentPage === 1 ? 'textDisabled' : 'primary'} />

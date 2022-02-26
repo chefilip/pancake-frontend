@@ -1,4 +1,4 @@
-import { useMemo, useState, memo } from 'react'
+import { memo } from 'react'
 import { Table, Th, Td, useMatchBreakpoints } from '@pancakeswap/uikit'
 import { useGelatoOpenLimitOrders } from 'hooks/limitOrders/useGelatoLimitOrdersHistory'
 
@@ -11,29 +11,11 @@ import HeaderCellStyle from './HeaderCellStyle'
 import FullRow from './FullRow'
 import LoadingTable from './LoadingTable'
 
-const ORDERS_PER_PAGE = 5
-
 const OpenOrderTable: React.FC<LimitOrderTableProps> = ({ isChartDisplayed }) => {
   const { isTablet } = useMatchBreakpoints()
-  const [page, setPage] = useState(1)
   const compactMode = !isChartDisplayed || isTablet
   const { t } = useTranslation()
   const orders = useGelatoOpenLimitOrders()
-
-  const maxPage = useMemo(() => {
-    if (orders?.length) {
-      return Math.ceil(orders?.length / ORDERS_PER_PAGE)
-    }
-    return 1
-  }, [orders?.length])
-
-  const onPageNext = () => {
-    setPage((currentPage) => (currentPage === maxPage ? currentPage : currentPage + 1))
-  }
-
-  const onPagePrev = () => {
-    setPage((currentPage) => (currentPage === 1 ? currentPage : currentPage - 1))
-  }
 
   if (!orders) return <LoadingTable />
 
@@ -41,47 +23,46 @@ const OpenOrderTable: React.FC<LimitOrderTableProps> = ({ isChartDisplayed }) =>
     return <NoOrderTable />
   }
 
-  const currentPageOrders = orders.slice(ORDERS_PER_PAGE * (page - 1), ORDERS_PER_PAGE * page)
-
   return (
-    <>
-      <Table>
-        {compactMode ? (
-          <tbody>
-            {currentPageOrders.map((order) => (
-              <tr key={order.id}>
-                <Td>
-                  <CompactRow order={order} />
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        ) : (
-          <>
-            <thead>
-              <tr>
-                <Th>
-                  <HeaderCellStyle>{t('From')}</HeaderCellStyle>
-                </Th>
-                <Th>
-                  <HeaderCellStyle>{t('To')}</HeaderCellStyle>
-                </Th>
-                <Th>
-                  <HeaderCellStyle>{t('Limit Price')}</HeaderCellStyle>
-                </Th>
-                <Th />
-              </tr>
-            </thead>
+    <Navigation data={orders}>
+      {({ paginatedData }) => (
+        <Table>
+          {compactMode ? (
             <tbody>
-              {orders.map((order) => (
-                <FullRow key={order.id} order={order} />
+              {paginatedData.map((order) => (
+                <tr key={order.id}>
+                  <Td>
+                    <CompactRow order={order} />
+                  </Td>
+                </tr>
               ))}
             </tbody>
-          </>
-        )}
-      </Table>
-      <Navigation currentPage={page} maxPage={maxPage} onPageNext={onPageNext} onPagePrev={onPagePrev} />
-    </>
+          ) : (
+            <>
+              <thead>
+                <tr>
+                  <Th>
+                    <HeaderCellStyle>{t('From')}</HeaderCellStyle>
+                  </Th>
+                  <Th>
+                    <HeaderCellStyle>{t('To')}</HeaderCellStyle>
+                  </Th>
+                  <Th>
+                    <HeaderCellStyle>{t('Limit Price')}</HeaderCellStyle>
+                  </Th>
+                  <Th />
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => (
+                  <FullRow key={order.id} order={order} />
+                ))}
+              </tbody>
+            </>
+          )}
+        </Table>
+      )}
+    </Navigation>
   )
 }
 
