@@ -1,4 +1,6 @@
-import { useCallback } from 'react'
+import { useCallback, Dispatch } from 'react'
+import { AnyAction } from '@reduxjs/toolkit'
+
 import { Order } from '@gelatonetwork/limit-orders-lib'
 import { BigNumber } from '@ethersproject/bignumber'
 import { Overrides } from '@ethersproject/contracts'
@@ -37,14 +39,14 @@ export interface GelatoLimitOrdersHandlers {
   handleRateType: (rateType: Rate, price?: Price) => void
 }
 
-const useGelatoLimitOrdersHandlers = (): GelatoLimitOrdersHandlers => {
+const useGelatoLimitOrdersHandlers = (dispatch: Dispatch<AnyAction>): GelatoLimitOrdersHandlers => {
   const { chainId, account } = useActiveWeb3React()
 
   const gelatoLimitOrders = useGelatoLimitOrdersLib()
 
   const addTransaction = useTransactionAdder()
 
-  const { onSwitchTokens, onCurrencySelection, onUserInput, onChangeRateType } = useOrderActionHandlers()
+  const { onSwitchTokens, onCurrencySelection, onUserInput, onChangeRateType } = useOrderActionHandlers(dispatch)
 
   const handleLimitOrderSubmission = useCallback(
     async (

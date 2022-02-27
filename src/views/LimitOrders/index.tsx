@@ -11,7 +11,6 @@ import useActiveWeb3React from 'hooks/useActiveWeb3React'
 import useGelatoLimitOrders from 'hooks/limitOrders/useGelatoLimitOrders'
 import { ApprovalState, useApproveCallbackFromInputCurrencyAmount } from 'hooks/useApproveCallback'
 import { Field } from 'state/limitOrders/types'
-import { useDefaultsFromURLSearch } from 'state/limitOrders/hooks'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
 import { GELATO_NATIVE } from 'config/constants'
@@ -28,9 +27,6 @@ const LimitOrders = () => {
   // Helpers
   const { account, chainId } = useActiveWeb3React()
   const { t } = useTranslation()
-
-  // TODO: use returned loadedUrlParams for warnings
-  useDefaultsFromURLSearch()
 
   // TODO: fiat values
 
