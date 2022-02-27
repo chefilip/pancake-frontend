@@ -9,9 +9,10 @@ import { AppBody } from 'components/App'
 import ConnectWalletButton from 'components/ConnectWalletButton'
 import useActiveWeb3React from 'hooks/useActiveWeb3React'
 import useGelatoLimitOrders from 'hooks/limitOrders/useGelatoLimitOrders'
+import { useOrderSubmission } from 'hooks/limitOrders/useGelatoLimitOrdersHandlers'
+
 import { ApprovalState, useApproveCallbackFromInputCurrencyAmount } from 'hooks/useApproveCallback'
 import { Field } from 'state/limitOrders/types'
-import { useDefaultsFromURLSearch } from 'state/limitOrders/hooks'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
 import { GELATO_NATIVE } from 'config/constants'
@@ -29,13 +30,10 @@ const LimitOrders = () => {
   const { account, chainId } = useActiveWeb3React()
   const { t } = useTranslation()
 
-  // TODO: use returned loadedUrlParams for warnings
-  useDefaultsFromURLSearch()
-
   // TODO: fiat values
 
   const {
-    handlers: { handleInput, handleCurrencySelection, handleSwitchTokens, handleLimitOrderSubmission, handleRateType },
+    handlers: { handleInput, handleCurrencySelection, handleSwitchTokens, handleRateType },
     derivedOrderInfo: {
       currencies,
       currencyBalances,
@@ -48,6 +46,8 @@ const LimitOrders = () => {
     },
     orderState: { independentField, rateType },
   } = useGelatoLimitOrders()
+
+  const { handleLimitOrderSubmission } = useOrderSubmission()
 
   const [{ swapErrorMessage, attemptingTxn, txHash }, setSwapState] = useState<{
     tradeToConfirm: Trade | undefined

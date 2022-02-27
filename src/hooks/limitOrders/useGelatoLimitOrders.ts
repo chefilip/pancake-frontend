@@ -1,4 +1,4 @@
-import { DerivedOrderInfo, useDerivedOrderInfo, useOrderState } from 'state/limitOrders/hooks'
+import { DerivedOrderInfo, useDerivedOrderInfo, useOrderState, useDefaultsFromURLSearch } from 'state/limitOrders/hooks'
 import { OrderState } from 'state/limitOrders/types'
 import useGelatoLimitOrdersHandlers, { GelatoLimitOrdersHandlers } from './useGelatoLimitOrdersHandlers'
 
@@ -7,16 +7,17 @@ const useGelatoLimitOrders = (): {
   derivedOrderInfo: DerivedOrderInfo
   orderState: OrderState
 } => {
-  const derivedOrderInfo = useDerivedOrderInfo()
+  const [localOrderState, localDispatch] = useOrderState()
 
-  const orderState = useOrderState()
+  useDefaultsFromURLSearch(localDispatch)
 
-  const handlers = useGelatoLimitOrdersHandlers()
+  const derivedOrderInfo = useDerivedOrderInfo(localOrderState)
+  const localHandlers = useGelatoLimitOrdersHandlers(localDispatch)
 
   return {
-    handlers,
+    handlers: localHandlers,
     derivedOrderInfo,
-    orderState,
+    orderState: localOrderState,
   }
 }
 

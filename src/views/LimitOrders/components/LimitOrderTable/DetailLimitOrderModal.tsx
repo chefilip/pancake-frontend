@@ -4,7 +4,7 @@ import useTheme from 'hooks/useTheme'
 import { memo, useCallback, useState } from 'react'
 import styled from 'styled-components'
 import { FormattedOrderData } from 'views/LimitOrders/hooks/useFormattedOrderData'
-import useGelatoLimitOrdersHandlers from 'hooks/limitOrders/useGelatoLimitOrdersHandlers'
+import { useOrderSubmission } from 'hooks/limitOrders/useGelatoLimitOrdersHandlers'
 import { Order } from '@gelatonetwork/limit-orders-lib'
 import { TransactionErrorContent, TransactionSubmittedContent } from 'components/TransactionConfirmationModal'
 import useActiveWeb3React from 'hooks/useActiveWeb3React'
@@ -33,7 +33,7 @@ export const DetailLimitOrderModal: React.FC<DetailLimitOrderModalProps> = ({ on
   const { chainId } = useActiveWeb3React()
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const { handleLimitOrderCancellation } = useGelatoLimitOrdersHandlers()
+  const { handleLimitOrderCancellation } = useOrderSubmission()
 
   const [{ cancellationErrorMessage, attemptingTxn, txHash }, setCancellationState] = useState<{
     attemptingTxn: boolean

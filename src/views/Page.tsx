@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import styled from 'styled-components'
 import { Box, Flex } from '@pancakeswap/uikit'
 import Footer from 'components/Menu/Footer'
@@ -46,4 +47,4 @@ const Page: React.FC<
   )
 }
 
-export default Page
+export default memo(Page)

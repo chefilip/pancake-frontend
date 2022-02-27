@@ -1,4 +1,6 @@
-import { useCallback } from 'react'
+import { useCallback, Dispatch } from 'react'
+import { AnyAction } from '@reduxjs/toolkit'
+
 import { Order } from '@gelatonetwork/limit-orders-lib'
 import { BigNumber } from '@ethersproject/bignumber'
 import { Overrides } from '@ethersproject/contracts'
@@ -12,7 +14,7 @@ import useActiveWeb3React from 'hooks/useActiveWeb3React'
 import { useTransactionAdder } from 'state/transactions/hooks'
 import useGelatoLimitOrdersLib from './useGelatoLimitOrdersLib'
 
-export interface GelatoLimitOrdersHandlers {
+export interface OrderLimitSubmission {
   handleLimitOrderSubmission: (orderToSubmit: {
     inputToken: string
     outputToken: string
@@ -31,20 +33,21 @@ export interface GelatoLimitOrdersHandlers {
     },
     overrides?: Overrides,
   ) => Promise<TransactionResponse>
+}
+
+export interface GelatoLimitOrdersHandlers {
   handleInput: (field: Field, value: string) => void
   handleCurrencySelection: (field: Field.INPUT | Field.OUTPUT, currency: Currency) => void
   handleSwitchTokens: () => void
   handleRateType: (rateType: Rate, price?: Price) => void
 }
 
-const useGelatoLimitOrdersHandlers = (): GelatoLimitOrdersHandlers => {
+export const useOrderSubmission = (): OrderLimitSubmission => {
   const { chainId, account } = useActiveWeb3React()
 
   const gelatoLimitOrders = useGelatoLimitOrdersLib()
 
   const addTransaction = useTransactionAdder()
-
-  const { onSwitchTokens, onCurrencySelection, onUserInput, onChangeRateType } = useOrderActionHandlers()
 
   const handleLimitOrderSubmission = useCallback(
     async (
@@ -164,6 +167,15 @@ const useGelatoLimitOrdersHandlers = (): GelatoLimitOrdersHandlers => {
     [gelatoLimitOrders, chainId, account, addTransaction],
   )
 
+  return {
+    handleLimitOrderSubmission,
+    handleLimitOrderCancellation,
+  }
+}
+
+const useGelatoLimitOrdersHandlers = (dispatch: Dispatch<AnyAction>): GelatoLimitOrdersHandlers => {
+  const { onSwitchTokens, onCurrencySelection, onUserInput, onChangeRateType } = useOrderActionHandlers(dispatch)
+
   const handleInput = useCallback(
     (field: Field, value: string) => {
       onUserInput(field, value)
@@ -196,8 +208,6 @@ const useGelatoLimitOrdersHandlers = (): GelatoLimitOrdersHandlers => {
   )
 
   return {
-    handleLimitOrderSubmission,
-    handleLimitOrderCancellation,
     handleInput,
     handleCurrencySelection,
     handleSwitchTokens,

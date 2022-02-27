@@ -1,9 +1,9 @@
 import JSBI from 'jsbi'
+import { AnyAction } from '@reduxjs/toolkit'
 import { parseUnits } from '@ethersproject/units'
-import { useDispatch, useSelector } from 'react-redux'
 import { ParsedUrlQuery } from 'querystring'
 import { Currency, CurrencyAmount, TokenAmount, Trade, Token, Price, ETHER } from '@pancakeswap/sdk'
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useReducer, Dispatch } from 'react'
 import useActiveWeb3React from 'hooks/useActiveWeb3React'
 import { wrappedCurrency } from 'utils/wrappedCurrency'
 import useParsedQueryString from 'hooks/useParsedQueryString'
@@ -14,7 +14,7 @@ import { useCurrencyBalances } from '../wallet/hooks'
 import { DEFAULT_INPUT_CURRENCY, DEFAULT_OUTPUT_CURRENCY } from './constants'
 import { replaceLimitOrdersState, selectCurrency, setRateType, switchCurrencies, typeInput } from './actions'
 import { Field, Rate, OrderState } from './types'
-import { AppState, AppDispatch } from '..'
+import limitOrders, { initialState } from './reducer'
 
 const applyExchangeRateTo = (
   inputValue: string,
@@ -55,19 +55,19 @@ const applyExchangeRateTo = (
   return resultAsAmount
 }
 
-// Just returns Redux state for limitOrders
-export const useOrderState = (): AppState['limitOrders'] => {
-  return useSelector<AppState, AppState['limitOrders']>((state) => state.limitOrders)
+export const useOrderState = (): [OrderState, Dispatch<AnyAction>] => {
+  return useReducer(limitOrders, initialState)
 }
 
 // Returns handlers to change user-defined parts of limitOrders state
-export const useOrderActionHandlers = (): {
+export const useOrderActionHandlers = (
+  dispatch: Dispatch<AnyAction>,
+): {
   onCurrencySelection: (field: Field, currency: Currency) => void
   onSwitchTokens: () => void
   onUserInput: (field: Field, typedValue: string) => void
   onChangeRateType: (rateType: Rate) => void
 } => {
-  const dispatch = useDispatch()
   const onCurrencySelection = useCallback(
     (field: Field, currency: Currency) => {
       dispatch(
@@ -207,7 +207,7 @@ const getErrorMessage = (
 }
 
 // from the current swap inputs, compute the best trade and return it.
-export const useDerivedOrderInfo = (): DerivedOrderInfo => {
+export const useDerivedOrderInfo = (localOrderState: OrderState): DerivedOrderInfo => {
   const { account, chainId } = useActiveWeb3React()
   const {
     independentField,
@@ -216,7 +216,7 @@ export const useDerivedOrderInfo = (): DerivedOrderInfo => {
     [Field.OUTPUT]: { currencyId: outputCurrencyId },
     rateType,
     inputValue,
-  } = useOrderState()
+  } = localOrderState
 
   // Get Currency objects based on currencyId strings
   const inputCurrency = useCurrency(inputCurrencyId)
@@ -401,11 +401,10 @@ const queryParametersToSwapState = (parsedQs: ParsedUrlQuery): OrderState => {
 }
 
 // updates the swap state to use the defaults for a given network
-export const useDefaultsFromURLSearch = ():
-  | { inputCurrencyId: string | undefined; outputCurrencyId: string | undefined }
-  | undefined => {
+export const useDefaultsFromURLSearch = (
+  dispatch: Dispatch<AnyAction>,
+): { inputCurrencyId: string | undefined; outputCurrencyId: string | undefined } | undefined => {
   const { chainId } = useActiveWeb3React()
-  const dispatch = useDispatch<AppDispatch>()
   const parsedQs = useParsedQueryString()
   const [result, setResult] = useState<
     { inputCurrencyId: string | undefined; outputCurrencyId: string | undefined } | undefined
