@@ -1,18 +1,20 @@
 import { useMemo } from 'react'
 import { Order } from '@gelatonetwork/limit-orders-lib'
-import { Currency, CurrencyAmount, JSBI, Price, Token, TokenAmount } from '@pancakeswap/sdk'
+import { Currency, CurrencyAmount, Price, Token, TokenAmount } from '@pancakeswap/sdk'
 import { useCurrency } from 'hooks/Tokens'
 import useGelatoLimitOrdersLib from 'hooks/limitOrders/useGelatoLimitOrdersLib'
 import useActiveWeb3React from 'hooks/useActiveWeb3React'
 import { getBscScanLink } from 'utils'
 import { useIsTransactionPending } from 'state/transactions/hooks'
+import getPriceForOneToken from '../utils/getPriceForOneToken'
 
 export interface FormattedOrderData {
   inputToken: Currency | Token
   outputToken: Currency | Token
-  inputAmount: CurrencyAmount
-  outputAmount: CurrencyAmount
-  executionPrice: Price
+  inputAmount: string
+  outputAmount: string
+  executionPrice: string
+  invertedExecutionPrice: string
   isOpen: boolean
   isCancelled: boolean
   isExecuted: boolean
@@ -23,6 +25,16 @@ export interface FormattedOrderData {
     executed: string
     cancelled: string
   }
+}
+
+const formatForDisplay = (amount: CurrencyAmount | Price) => {
+  if (!amount) {
+    return undefined
+  }
+  return parseFloat(amount.toSignificant(18)).toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 8,
+  })
 }
 
 // Transforms Gelato Order type into types ready to be displayed in UI
@@ -65,24 +77,15 @@ const useFormattedOrderData = (order: Order): FormattedOrderData => {
     return undefined
   }, [outputToken, rawMinReturn])
 
-  const executionPrice = useMemo(() => {
-    if (outputAmount && outputAmount.greaterThan(0) && inputAmount) {
-      const outExp = JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(outputAmount.currency.decimals))
-      const inExp = JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(inputAmount.currency.decimals))
-      const pricePerOne = outputAmount.asFraction.divide(inputAmount.asFraction).divide(inExp).multiply(outExp)
-      return new Price(inputAmount.currency, outputAmount.currency, pricePerOne.denominator, pricePerOne.numerator)
-    }
-    return undefined
-  }, [inputAmount, outputAmount])
-
-  // TODO: pre-make toSignificant format
+  const executionPrice = useMemo(() => getPriceForOneToken(inputAmount, outputAmount), [inputAmount, outputAmount])
 
   return {
     inputToken,
     outputToken,
-    inputAmount,
-    outputAmount,
-    executionPrice,
+    inputAmount: formatForDisplay(inputAmount),
+    outputAmount: formatForDisplay(outputAmount),
+    executionPrice: formatForDisplay(executionPrice),
+    invertedExecutionPrice: formatForDisplay(executionPrice?.invert()),
     isOpen: order.status === 'open',
     isCancelled: order.status === 'cancelled',
     isExecuted: order.status === 'executed',

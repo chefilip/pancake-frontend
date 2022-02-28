@@ -1,20 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
-import { CurrencyAmount, Percent, Token, Trade } from '@pancakeswap/sdk'
-import { Button, Box, Flex, useModal } from '@pancakeswap/uikit'
+import { CurrencyAmount, ETHER, Token, Trade } from '@pancakeswap/sdk'
+import { Button, Box, Flex, useModal, useMatchBreakpoints, BottomDrawer } from '@pancakeswap/uikit'
 
 import { useTranslation } from 'contexts/Localization'
 import { AutoColumn } from 'components/Layout/Column'
 import CurrencyInputPanel from 'components/CurrencyInputPanel'
 import { AppBody } from 'components/App'
 import ConnectWalletButton from 'components/ConnectWalletButton'
+import Footer from 'components/Menu/Footer'
 import useActiveWeb3React from 'hooks/useActiveWeb3React'
 import useGelatoLimitOrders from 'hooks/limitOrders/useGelatoLimitOrders'
 import { ApprovalState, useApproveCallbackFromInputCurrencyAmount } from 'hooks/useApproveCallback'
 import { Field } from 'state/limitOrders/types'
 import { useDefaultsFromURLSearch } from 'state/limitOrders/hooks'
 import { maxAmountSpend } from 'utils/maxAmountSpend'
-import { wrappedCurrency } from 'utils/wrappedCurrency'
 import { GELATO_NATIVE } from 'config/constants'
+import { useExchangeChartManager } from 'state/user/hooks'
+import PriceChartContainer from 'views/Swap/components/Chart/PriceChartContainer'
 
 import { Wrapper, StyledInputCurrencyWrapper, StyledSwapContainer } from './styles'
 import CurrencyInputHeader from './components/CurrencyInputHeader'
@@ -23,11 +25,20 @@ import SwitchTokensButton from './components/SwitchTokensButton'
 import Page from '../Page'
 import LimitOrderTable from './components/LimitOrderTable'
 import { ConfirmLimitOrderModal } from './components/ConfirmLimitOrderModal'
+import getRatePercentageDifference from './utils/getRatePercentageDifference'
 
 const LimitOrders = () => {
   // Helpers
-  const { account, chainId } = useActiveWeb3React()
+  const { account } = useActiveWeb3React()
   const { t } = useTranslation()
+  const { isMobile, isTablet } = useMatchBreakpoints()
+  const [userChartPreference, setUserChartPreference] = useExchangeChartManager(isMobile)
+  const [isChartExpanded, setIsChartExpanded] = useState(false)
+  const [isChartDisplayed, setIsChartDisplayed] = useState(userChartPreference)
+
+  useEffect(() => {
+    setUserChartPreference(isChartDisplayed)
+  }, [isChartDisplayed, setUserChartPreference])
 
   // TODO: use returned loadedUrlParams for warnings
   useDefaultsFromURLSearch()
@@ -45,6 +56,8 @@ const LimitOrders = () => {
       trade,
       price,
       inputError,
+      wrappedCurrencies,
+      singleTokenPrice,
     },
     orderState: { independentField, rateType },
   } = useGelatoLimitOrders()
@@ -68,17 +81,13 @@ const LimitOrders = () => {
   const maxAmountInput: CurrencyAmount | undefined = maxAmountSpend(currencyBalances.input)
   const hideMaxButton = Boolean(maxAmountInput && parsedAmounts.input?.equalTo(maxAmountInput))
 
+  // Trade execution price is always "in MUL mode", even if UI handles DIV rate
   const currentMarketRate = trade?.executionPrice
-  const percentageAsFraction =
-    currentMarketRate && price ? price.subtract(currentMarketRate).divide(currentMarketRate) : undefined
-  const percentageRateDifference = percentageAsFraction
-    ? new Percent(percentageAsFraction.numerator, percentageAsFraction.denominator)
-    : undefined
+  const percentageRateDifference = getRatePercentageDifference(currentMarketRate, price)
 
   // UI handlers
   const handleTypeInput = useCallback(
     (value: string) => {
-      setApprovalSubmitted(false)
       handleInput(Field.INPUT, value)
     },
     [handleInput],
@@ -124,6 +133,11 @@ const LimitOrders = () => {
     }
   }, [txHash, handleTypeInput])
 
+  // Trick to reset to market price via fake update on the input field
+  const handleResetToMarketPrice = useCallback(() => {
+    handleTypeInput(formattedAmounts.input)
+  }, [handleTypeInput, formattedAmounts.input])
+
   const handlePlaceOrder = useCallback(() => {
     console.log('Placing order')
     if (!handleLimitOrderSubmission) {
@@ -135,14 +149,12 @@ const LimitOrders = () => {
       swapErrorMessage: undefined,
       txHash: undefined,
     }))
-    const wrappedInput = wrappedCurrency(currencies.input, chainId)
-    const wrappedOutput = wrappedCurrency(currencies.output, chainId)
 
     try {
-      if (!wrappedInput.address) {
+      if (!wrappedCurrencies.input?.address) {
         throw new Error('Invalid input currency')
       }
-      if (!wrappedOutput.address) {
+      if (!wrappedCurrencies.output?.address) {
         throw new Error('Invalid output currency')
       }
       if (!rawAmounts.input) {
@@ -155,9 +167,9 @@ const LimitOrders = () => {
       if (!account) {
         throw new Error('No account')
       }
-      const inputToken = currencies.input instanceof Token ? wrappedInput.address : GELATO_NATIVE
-      const outputToken = currencies.output instanceof Token ? wrappedOutput.address : GELATO_NATIVE
-      // TODO: use native BNB
+      const inputToken = currencies.input instanceof Token ? wrappedCurrencies.input?.address : GELATO_NATIVE
+      const outputToken = currencies.output instanceof Token ? wrappedCurrencies.output?.address : GELATO_NATIVE
+
       const orderToSubmit = {
         inputToken,
         outputToken,
@@ -191,11 +203,12 @@ const LimitOrders = () => {
   }, [
     handleLimitOrderSubmission,
     account,
-    chainId,
     rawAmounts.input,
     rawAmounts.output,
     currencies.input,
     currencies.output,
+    wrappedCurrencies.input?.address,
+    wrappedCurrencies.output?.address,
   ])
 
   const [showConfirmModal] = useModal(
@@ -222,7 +235,6 @@ const LimitOrders = () => {
   )
 
   // mark when a user has submitted an approval, reset onTokenSelection for input field
-  // TODO: reset
   useEffect(() => {
     if (approvalState === ApprovalState.PENDING) {
       setApprovalSubmitted(true)
@@ -232,18 +244,68 @@ const LimitOrders = () => {
   const showApproveFlow =
     !inputError && (approvalState === ApprovalState.NOT_APPROVED || approvalState === ApprovalState.PENDING)
 
+  const inputCurrencyId =
+    currencies.input instanceof Token ? currencies.input.address : currencies.input === ETHER ? 'BNB' : ''
+  const outputCurrencyId =
+    currencies.output instanceof Token ? currencies.output.address : currencies.output === ETHER ? 'BNB' : ''
+
+  const isSideFooter = isChartExpanded || isChartDisplayed
   return (
-    <Page>
-      <Flex width="100%" justifyContent="center" position="relative">
+    <Page removePadding={isChartExpanded} hideFooterOnDesktop={isSideFooter} noMinHeight>
+      <Flex
+        width="100%"
+        justifyContent="center"
+        position="relative"
+        mb={isSideFooter ? null : '24px'}
+        mt={isChartExpanded ? '24px' : null}
+      >
         <Flex flexDirection="column">
+          {!isMobile && (
+            <>
+              <PriceChartContainer
+                inputCurrencyId={inputCurrencyId}
+                inputCurrency={currencies[Field.INPUT]}
+                outputCurrencyId={outputCurrencyId}
+                outputCurrency={currencies[Field.OUTPUT]}
+                isChartExpanded={isChartExpanded}
+                setIsChartExpanded={setIsChartExpanded}
+                isChartDisplayed={isChartDisplayed}
+                currentSwapPrice={singleTokenPrice}
+                isFullWidthContainer
+              />
+              {isChartDisplayed && <Box mb="48px" />}
+              <Box width="100%">
+                <LimitOrderTable isCompact={isTablet} />
+              </Box>
+            </>
+          )}
+        </Flex>
+        <BottomDrawer
+          content={
+            <PriceChartContainer
+              inputCurrencyId={inputCurrencyId}
+              inputCurrency={currencies[Field.INPUT]}
+              outputCurrencyId={outputCurrencyId}
+              outputCurrency={currencies[Field.OUTPUT]}
+              isChartExpanded={isChartExpanded}
+              setIsChartExpanded={setIsChartExpanded}
+              isChartDisplayed={isChartDisplayed}
+              currentSwapPrice={singleTokenPrice}
+              isMobile
+            />
+          }
+          isOpen={isChartDisplayed}
+          setIsOpen={setIsChartDisplayed}
+        />
+        <Flex flexDirection="column" alignItems="center">
           <StyledSwapContainer $isChartExpanded={false}>
-            <StyledInputCurrencyWrapper mt="24px">
+            <StyledInputCurrencyWrapper>
               <AppBody>
                 <CurrencyInputHeader
                   title={t('Limit')}
                   subtitle={t('Place a limit order to trade at a set price')}
-                  setIsChartDisplayed={null}
-                  isChartDisplayed={false}
+                  setIsChartDisplayed={setIsChartDisplayed}
+                  isChartDisplayed={isChartDisplayed}
                 />
                 <Wrapper id="limit-order-page" style={{ minHeight: '412px' }}>
                   <AutoColumn gap="sm">
@@ -285,8 +347,8 @@ const LimitOrders = () => {
                       percentageRateDifference={percentageRateDifference}
                       rateType={rateType}
                       handleRateType={handleRateType}
-                      marketPrice={currentMarketRate}
                       price={price}
+                      handleResetToMarketPrice={handleResetToMarketPrice}
                     />
                   </AutoColumn>
                   <Box mt="0.25rem">
@@ -326,13 +388,18 @@ const LimitOrders = () => {
               </AppBody>
             </StyledInputCurrencyWrapper>
           </StyledSwapContainer>
+          {isMobile && (
+            <Flex mt="24px" width="100%">
+              <LimitOrderTable isCompact />
+            </Flex>
+          )}
+          {isSideFooter && (
+            <Box display={['none', null, null, 'block']} width="100%" height="100%">
+              <Footer variant="side" />
+            </Box>
+          )}
         </Flex>
       </Flex>
-      {account && (
-        <div style={{ width: '100%' }}>
-          <LimitOrderTable isChartDisplayed={false} />
-        </div>
-      )}
     </Page>
   )
 }

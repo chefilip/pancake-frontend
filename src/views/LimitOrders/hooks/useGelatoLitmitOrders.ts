@@ -2,9 +2,12 @@ import { Order } from '@gelatonetwork/limit-orders-lib'
 import useActiveWeb3React from 'hooks/useActiveWeb3React'
 import useSWR from 'swr'
 import { SLOW_INTERVAL } from 'config/constants'
+import { useMemo } from 'react'
 
 import { getLSOrders, saveOrder } from 'utils/localStorageOrders'
-import useGelatoLimitOrdersLib from './useGelatoLimitOrdersLib'
+import useGelatoLimitOrdersLib from 'hooks/limitOrders/useGelatoLimitOrdersLib'
+
+import { ORDER_CATEGORY } from '../types'
 
 function newOrdersFirst(a: Order, b: Order) {
   return Number(b.updatedAt) - Number(a.updatedAt)
@@ -22,13 +25,13 @@ function syncOrderToLocalStorage({ chainId, account, orders }) {
   })
 }
 
-export function useGelatoOpenLimitOrders(): Order[] {
+export function useGelatoOpenLimitOrders(turnOn: boolean): Order[] {
   const { account, chainId } = useActiveWeb3React()
 
   const gelatoLimitOrders = useGelatoLimitOrdersLib()
 
   const { data } = useSWR(
-    gelatoLimitOrders && account && chainId ? ['gelato', 'openOrders'] : null,
+    turnOn && gelatoLimitOrders && account && chainId ? ['gelato', 'openOrders'] : null,
     async () => {
       try {
         const orders = await gelatoLimitOrders.getOpenOrders(account.toLowerCase(), false)
@@ -66,12 +69,12 @@ export function useGelatoOpenLimitOrders(): Order[] {
   return data
 }
 
-export function useGelatoLimitOrdersHistory(): Order[] {
+export function useGelatoLimitOrdersHistory(turnOn: boolean): Order[] {
   const { account, chainId } = useActiveWeb3React()
   const gelatoLimitOrders = useGelatoLimitOrdersLib()
 
   const { data } = useSWR(
-    gelatoLimitOrders && account && chainId ? ['gelato', 'cancelledOrders'] : null,
+    turnOn && gelatoLimitOrders && account && chainId ? ['gelato', 'cancelledOrders'] : null,
     async () => {
       try {
         const acc = account.toLowerCase()
@@ -111,4 +114,16 @@ export function useGelatoLimitOrdersHistory(): Order[] {
   )
 
   return data
+}
+
+export default function useGelatoLimitOrders(orderCategory: ORDER_CATEGORY) {
+  const historyOrders = useGelatoLimitOrdersHistory(orderCategory === ORDER_CATEGORY.History)
+  const openOrders = useGelatoOpenLimitOrders(orderCategory === ORDER_CATEGORY.Open)
+
+  const orders = useMemo(
+    () => (orderCategory === ORDER_CATEGORY.Open ? openOrders : historyOrders),
+    [orderCategory, openOrders, historyOrders],
+  )
+
+  return orders
 }
