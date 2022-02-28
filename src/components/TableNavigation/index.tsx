@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, ReactElement } from 'react'
+import { useState, useMemo, useCallback, ReactElement, memo } from 'react'
 import { Text, ArrowBackIcon, ArrowForwardIcon } from '@pancakeswap/uikit'
 import styled from 'styled-components'
 import { useTranslation } from 'contexts/Localization'
@@ -80,4 +80,4 @@ const TableNavigation: React.FC<TableNavigationProps> = ({ data, itemsPerPage = 
   )
 }
 
-export default TableNavigation
+export default memo(TableNavigation)

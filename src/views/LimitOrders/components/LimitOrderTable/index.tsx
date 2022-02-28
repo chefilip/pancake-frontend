@@ -10,17 +10,19 @@ import NoOrdersMessage from './NoOrdersMessage'
 import LoadingTable from './LoadingTable'
 import SpaciousLimitOrderTable from './SpaciousLimitOrderTable'
 
-const OrderTable: React.FC<{ isCompact: boolean; orderCategory: ORDER_CATEGORY }> = ({ orderCategory, isCompact }) => {
-  const orders = useGelatoLimitOrders(orderCategory)
+const OrderTable: React.FC<{ isCompact: boolean; orderCategory: ORDER_CATEGORY }> = memo(
+  ({ orderCategory, isCompact }) => {
+    const orders = useGelatoLimitOrders(orderCategory)
 
-  if (!orders) return <LoadingTable />
+    if (!orders) return <LoadingTable />
 
-  if (!orders?.length) {
-    return <NoOrdersMessage orderCategory={orderCategory} />
-  }
+    if (!orders?.length) {
+      return <NoOrdersMessage orderCategory={orderCategory} />
+    }
 
-  return isCompact ? <CompactLimitOrderTable orders={orders} /> : <SpaciousLimitOrderTable orders={orders} />
-}
+    return isCompact ? <CompactLimitOrderTable orders={orders} /> : <SpaciousLimitOrderTable orders={orders} />
+  },
+)
 
 const LimitOrderTable: React.FC<{ isCompact: boolean }> = ({ isCompact }) => {
   const [activeTab, setIndex] = useState<ORDER_CATEGORY>(ORDER_CATEGORY.Open)
