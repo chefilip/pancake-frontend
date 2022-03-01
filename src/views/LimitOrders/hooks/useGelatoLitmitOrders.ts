@@ -125,5 +125,9 @@ export default function useGelatoLimitOrders(orderCategory: ORDER_CATEGORY) {
     [orderCategory, openOrders, historyOrders],
   )
 
-  return orders
+  return useMemo(
+    () =>
+      Array.isArray(orders) ? orders.sort((a, b) => parseInt(b.createdAt, 10) - parseInt(a.createdAt, 10)) : orders,
+    [orders],
+  )
 }

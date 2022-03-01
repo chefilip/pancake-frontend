@@ -9,6 +9,7 @@ import CompactLimitOrderTable from './CompactLimitOrderTable'
 import NoOrdersMessage from './NoOrdersMessage'
 import LoadingTable from './LoadingTable'
 import SpaciousLimitOrderTable from './SpaciousLimitOrderTable'
+import Navigation from './TableNavigation'
 
 const OrderTable: React.FC<{ isCompact: boolean; orderCategory: ORDER_CATEGORY }> = memo(
   ({ orderCategory, isCompact }) => {
@@ -20,12 +21,16 @@ const OrderTable: React.FC<{ isCompact: boolean; orderCategory: ORDER_CATEGORY }
       return <NoOrdersMessage orderCategory={orderCategory} />
     }
 
-    const sortedOrders = orders.sort((a, b) => parseInt(b.createdAt, 10) - parseInt(a.createdAt, 10))
-
-    return isCompact ? (
-      <CompactLimitOrderTable orders={sortedOrders} />
-    ) : (
-      <SpaciousLimitOrderTable orders={sortedOrders} />
+    return (
+      <Navigation data={orders} resetFlag={orderCategory}>
+        {({ paginatedData }) =>
+          isCompact ? (
+            <CompactLimitOrderTable orders={paginatedData} />
+          ) : (
+            <SpaciousLimitOrderTable orders={paginatedData} />
+          )
+        }
+      </Navigation>
     )
   },
 )

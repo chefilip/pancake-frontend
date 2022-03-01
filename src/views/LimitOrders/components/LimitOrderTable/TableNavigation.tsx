@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, ReactElement, memo } from 'react'
+import { useState, useMemo, useCallback, ReactElement, memo, useEffect } from 'react'
 import { Text, Flex, Box, Grid, ArrowBackIcon, ArrowForwardIcon } from '@pancakeswap/uikit'
 import styled from 'styled-components'
 import { useTranslation } from 'contexts/Localization'
@@ -20,11 +20,17 @@ interface TableNavigationProps {
   data: any[]
   itemsPerPage?: number
   children: (exposedProps: ExposedProps) => ReactElement
+  resetFlag: boolean | number | string
 }
 
 const ORDERS_PER_PAGE = 5
 
-const TableNavigation: React.FC<TableNavigationProps> = ({ data, itemsPerPage = ORDERS_PER_PAGE, children }) => {
+const TableNavigation: React.FC<TableNavigationProps> = ({
+  data,
+  resetFlag,
+  itemsPerPage = ORDERS_PER_PAGE,
+  children,
+}) => {
   const { t } = useTranslation()
   const [currentPage, setPage] = useState(1)
 
@@ -51,6 +57,10 @@ const TableNavigation: React.FC<TableNavigationProps> = ({ data, itemsPerPage = 
   const paginatedData = useMemo(() => {
     return Array.isArray(data) ? data.slice(from, to) : []
   }, [data, from, to])
+
+  useEffect(() => {
+    setPage(1)
+  }, [resetFlag])
 
   return (
     <>
