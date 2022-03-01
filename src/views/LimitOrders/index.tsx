@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import { CurrencyAmount, ETHER, Token, Trade } from '@pancakeswap/sdk'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { CurrencyAmount, Token, Trade } from '@pancakeswap/sdk'
 import { Button, Box, Flex, useModal, useMatchBreakpoints, BottomDrawer } from '@pancakeswap/uikit'
 
 import { useTranslation } from 'contexts/Localization'
@@ -58,6 +58,7 @@ const LimitOrders = () => {
       inputError,
       wrappedCurrencies,
       singleTokenPrice,
+      currencyIds,
     },
     orderState: { independentField, rateType },
   } = useGelatoLimitOrders()
@@ -244,12 +245,8 @@ const LimitOrders = () => {
   const showApproveFlow =
     !inputError && (approvalState === ApprovalState.NOT_APPROVED || approvalState === ApprovalState.PENDING)
 
-  const inputCurrencyId =
-    currencies.input instanceof Token ? currencies.input.address : currencies.input === ETHER ? 'BNB' : ''
-  const outputCurrencyId =
-    currencies.output instanceof Token ? currencies.output.address : currencies.output === ETHER ? 'BNB' : ''
-
   const isSideFooter = isChartExpanded || isChartDisplayed
+
   return (
     <Page removePadding={isChartExpanded} hideFooterOnDesktop={isSideFooter} noMinHeight>
       <Flex
@@ -259,44 +256,27 @@ const LimitOrders = () => {
         mb={isSideFooter ? null : '24px'}
         mt={isChartExpanded ? '24px' : null}
       >
-        <Flex flexDirection="column">
-          {!isMobile && (
-            <>
-              <PriceChartContainer
-                inputCurrencyId={inputCurrencyId}
-                inputCurrency={currencies[Field.INPUT]}
-                outputCurrencyId={outputCurrencyId}
-                outputCurrency={currencies[Field.OUTPUT]}
-                isChartExpanded={isChartExpanded}
-                setIsChartExpanded={setIsChartExpanded}
-                isChartDisplayed={isChartDisplayed}
-                currentSwapPrice={singleTokenPrice}
-                isFullWidthContainer
-              />
-              {isChartDisplayed && <Box mb="48px" />}
-              <Box width="100%">
-                <LimitOrderTable isCompact={isTablet} />
-              </Box>
-            </>
-          )}
-        </Flex>
-        <BottomDrawer
-          content={
+        {!isMobile && (
+          <Flex width={isChartExpanded ? '100%' : '50%'} flexDirection="column">
             <PriceChartContainer
-              inputCurrencyId={inputCurrencyId}
-              inputCurrency={currencies[Field.INPUT]}
-              outputCurrencyId={outputCurrencyId}
-              outputCurrency={currencies[Field.OUTPUT]}
+              inputCurrencyId={currencyIds.input}
+              inputCurrency={currencies.input}
+              outputCurrencyId={currencyIds.output}
+              outputCurrency={currencies.output}
               isChartExpanded={isChartExpanded}
               setIsChartExpanded={setIsChartExpanded}
               isChartDisplayed={isChartDisplayed}
               currentSwapPrice={singleTokenPrice}
-              isMobile
+              isFullWidthContainer
             />
-          }
-          isOpen={isChartDisplayed}
-          setIsOpen={setIsChartDisplayed}
-        />
+            {isChartDisplayed && <Box mb="48px" />}
+            {userHasOrders && (
+              <Box width="100%">
+                <LimitOrderTable orderHistory={orderHistory} isCompact={isTablet} />
+              </Box>
+            )}
+          </Flex>
+        )}
         <Flex flexDirection="column" alignItems="center">
           <StyledSwapContainer $isChartExpanded={false}>
             <StyledInputCurrencyWrapper>
@@ -362,7 +342,9 @@ const LimitOrders = () => {
                         width="100%"
                         disabled={approvalSubmitted}
                       >
-                        {approvalSubmitted ? t('Enabling') : t('Enable')}
+                        {approvalSubmitted
+                          ? t('Enabling %asset%', { asset: currencies.input?.symbol })
+                          : t('Enable %asset%', { asset: currencies.input?.symbol })}
                       </Button>
                     ) : (
                       <Button
@@ -400,6 +382,24 @@ const LimitOrders = () => {
           )}
         </Flex>
       </Flex>
+      {/* Fixed position, doesn't take normal DOM space */}
+      <BottomDrawer
+        content={
+          <PriceChartContainer
+            inputCurrencyId={currencyIds.input}
+            inputCurrency={currencies[Field.INPUT]}
+            outputCurrencyId={currencyIds.output}
+            outputCurrency={currencies[Field.OUTPUT]}
+            isChartExpanded={isChartExpanded}
+            setIsChartExpanded={setIsChartExpanded}
+            isChartDisplayed={isChartDisplayed}
+            currentSwapPrice={singleTokenPrice}
+            isMobile
+          />
+        }
+        isOpen={isChartDisplayed}
+        setIsOpen={setIsChartDisplayed}
+      />
     </Page>
   )
 }
