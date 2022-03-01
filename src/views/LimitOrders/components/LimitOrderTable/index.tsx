@@ -1,4 +1,4 @@
-import { useState, useCallback, memo, useMemo } from 'react'
+import { useState, useCallback, memo } from 'react'
 import { Flex, Card } from '@pancakeswap/uikit'
 import useGelatoLimitOrders from '../../hooks/useGelatoLitmitOrders'
 
@@ -14,16 +14,13 @@ const OrderTable: React.FC<{ isCompact: boolean; orderCategory: ORDER_CATEGORY }
   ({ orderCategory, isCompact }) => {
     const orders = useGelatoLimitOrders(orderCategory)
 
-    const sortedOrders = useMemo(
-      () => orders.sort((a, b) => parseInt(b.createdAt, 10) - parseInt(a.createdAt, 10)),
-      [orders],
-    )
+    if (!orders) return <LoadingTable />
 
-    if (!sortedOrders) return <LoadingTable />
-
-    if (!sortedOrders?.length) {
+    if (!orders?.length) {
       return <NoOrdersMessage orderCategory={orderCategory} />
     }
+
+    const sortedOrders = orders.sort((a, b) => parseInt(b.createdAt, 10) - parseInt(a.createdAt, 10))
 
     return isCompact ? (
       <CompactLimitOrderTable orders={sortedOrders} />

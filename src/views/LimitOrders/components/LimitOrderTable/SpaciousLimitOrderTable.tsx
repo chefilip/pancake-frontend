@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import { Table, Th, Text } from '@pancakeswap/uikit'
 import { useTranslation } from 'contexts/Localization'
-import Navigation from 'components/TableNavigation'
+import Navigation from './TableNavigation'
 import FullRow from './FullRow'
 
 const SpaciousLimitOrderTable = ({ orders }) => {

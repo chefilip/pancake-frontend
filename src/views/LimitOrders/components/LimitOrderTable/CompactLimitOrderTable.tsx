@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import styled from 'styled-components'
 import { Table, Td } from '@pancakeswap/uikit'
-import Navigation from 'components/TableNavigation'
+import Navigation from './TableNavigation'
 import CompactRow from './CompactRow'
 
 const RowStyle = styled.tr`

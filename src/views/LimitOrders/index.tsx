@@ -270,11 +270,9 @@ const LimitOrders = () => {
               isFullWidthContainer
             />
             {isChartDisplayed && <Box mb="48px" />}
-            {userHasOrders && (
-              <Box width="100%">
-                <LimitOrderTable orderHistory={orderHistory} isCompact={isTablet} />
-              </Box>
-            )}
+            <Box width="100%">
+              <LimitOrderTable isCompact={isTablet} />
+            </Box>
           </Flex>
         )}
         <Flex flexDirection="column" alignItems="center">
