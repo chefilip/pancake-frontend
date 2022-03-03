@@ -194,7 +194,7 @@ export const NotConnected: React.FC = () => {
         setLang={noop}
         currentLang="EN"
         links={links}
-        subLinks={links[0].items}
+        subLinks={subLinks}
         footerLinks={footerLinks}
       >
         <div>
@@ -225,7 +225,7 @@ export const WithoutConnectButton: React.FC = () => {
         currentLang="EN"
         links={links}
         footerLinks={footerLinks}
-        subLinks={links[0].items}
+        subLinks={subLinks}
       >
         <div>
           <h1>No connect button on top</h1>

@@ -1,15 +1,6 @@
-import noop from "lodash/noop";
+import { noop } from "lodash";
 import { DropdownMenuItems, DropdownMenuItemType } from "../../components/DropdownMenu/types";
 import { MenuItemsType } from "../../components/MenuItems/types";
-import {
-  SwapIcon,
-  SwapFillIcon,
-  EarnFillIcon,
-  EarnIcon,
-  TrophyIcon,
-  TrophyFillIcon,
-  MoreIcon,
-} from "../../components/Svg";
 import { LinkStatus } from "./types";
 
 export const status = {
@@ -31,8 +22,7 @@ export const links: MenuItemsType[] = [
   {
     label: "Trade",
     href: "/swap",
-    icon: SwapIcon,
-    fillIcon: SwapFillIcon,
+    icon: "Swap",
     items: [
       {
         label: "Exchange",
@@ -53,8 +43,7 @@ export const links: MenuItemsType[] = [
   {
     label: "Earn",
     href: "/earn",
-    icon: EarnIcon,
-    fillIcon: EarnFillIcon,
+    icon: "Earn",
     items: [
       {
         label: "Earn",
@@ -73,8 +62,7 @@ export const links: MenuItemsType[] = [
   {
     label: "Win",
     href: "/",
-    icon: TrophyIcon,
-    fillIcon: TrophyFillIcon,
+    icon: "Trophy",
     items: [
       {
         label: "Win",
@@ -94,7 +82,7 @@ export const links: MenuItemsType[] = [
   {
     label: "",
     href: "/",
-    icon: MoreIcon,
+    icon: "More",
     items: [
       {
         label: "Info & Analytics",

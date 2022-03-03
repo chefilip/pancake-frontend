@@ -1,4 +1,4 @@
-import uniqueId from "lodash/uniqueId";
+import { uniqueId } from "lodash";
 import React from "react";
 import Svg from "../Svg";
 import { SvgProps } from "../types";

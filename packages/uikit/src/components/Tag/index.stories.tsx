@@ -1,4 +1,5 @@
-import capitalize from "lodash/capitalize";
+import React from "react";
+import { capitalize } from "lodash";
 import Box from "../Box/Box";
 import Flex from "../Box/Flex";
 import { CommunityIcon, RemoveIcon } from "../Svg";

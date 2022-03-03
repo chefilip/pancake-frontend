@@ -1,6 +1,7 @@
+import React from "react";
 import useTooltip from "../../hooks/useTooltip/useTooltip";
 import { BoxProps, Flex } from "../Box";
-import { InfoIcon } from "../Svg";
+import IconComponent from "../Svg/IconComponent";
 
 type InfoTooltip = {
   text: string;
@@ -13,7 +14,7 @@ const InfoTooltip: React.FC<InfoTooltip> = ({ text, iconColor = "textSubtle", ..
     <Flex {...props} alignItems="center">
       {tooltipVisible && tooltip}
       <Flex ref={targetRef} alignItems="center">
-        <InfoIcon color={iconColor} />
+        <IconComponent iconName="Info" color={iconColor} />
       </Flex>
     </Flex>
   );

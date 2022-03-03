@@ -1,4 +1,4 @@
-import noop from "lodash/noop";
+import { noop } from "lodash";
 import { DropdownMenuItems, DropdownMenuItemType } from "./types";
 
 const ItemsMock: DropdownMenuItems[] = [

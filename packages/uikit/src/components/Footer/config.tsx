@@ -1,6 +1,5 @@
 import { Language } from "../LangSelector/types";
 import { FooterLinkType } from "./types";
-import { TwitterIcon, TelegramIcon, RedditIcon, InstagramIcon, GithubIcon, DiscordIcon, MediumIcon } from "../Svg";
 
 export const footerLinks: FooterLinkType[] = [
   {
@@ -79,12 +78,12 @@ export const footerLinks: FooterLinkType[] = [
 export const socials = [
   {
     label: "Twitter",
-    icon: TwitterIcon,
+    icon: "Twitter",
     href: "https://twitter.com/pancakeswap",
   },
   {
     label: "Telegram",
-    icon: TelegramIcon,
+    icon: "Telegram",
     items: [
       {
         label: "English",
@@ -150,27 +149,27 @@ export const socials = [
   },
   {
     label: "Reddit",
-    icon: RedditIcon,
+    icon: "Reddit",
     href: "https://reddit.com/r/pancakeswap",
   },
   {
     label: "Instagram",
-    icon: InstagramIcon,
+    icon: "Instagram",
     href: "https://instagram.com/pancakeswap_official",
   },
   {
     label: "Github",
-    icon: GithubIcon,
+    icon: "Github",
     href: "https://github.com/pancakeswap/",
   },
   {
     label: "Discord",
-    icon: DiscordIcon,
+    icon: "Discord",
     href: "https://discord.gg/pancakeswap",
   },
   {
     label: "Medium",
-    icon: MediumIcon,
+    icon: "Medium",
     href: "https://pancakeswap.medium.com/",
   },
 ];

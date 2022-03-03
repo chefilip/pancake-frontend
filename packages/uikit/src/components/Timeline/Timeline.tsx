@@ -1,6 +1,7 @@
+import React from "react";
 import { Colors, lightColors } from "../../theme";
 import { Flex } from "../Box";
-import { CircleOutlineIcon, LogoIcon, CheckmarkCircleFillIcon } from "../Svg";
+import IconComponent from "../Svg/IconComponent";
 import { Text } from "../Text";
 import InfoTooltip from "./InfoTooltip";
 import { TimelineContainer, TimelineEvent } from "./styles";
@@ -27,9 +28,13 @@ const Timeline: React.FC<TimelineProps> = ({ events, useDark = true }) => {
         return (
           <TimelineEvent key={text} $useDark={useDark}>
             <Flex mr="10px" alignItems="center">
-              {isUpcoming && <CircleOutlineIcon color={useDark ? "textDisabled" : lightColors.textDisabled} />}
-              {isLive && <LogoIcon />}
-              {isPast && <CheckmarkCircleFillIcon color={useDark ? "textSubtle" : lightColors.textSubtle} />}
+              {isUpcoming && (
+                <IconComponent iconName="CircleOutline" color={useDark ? "textDisabled" : lightColors.textDisabled} />
+              )}
+              {isLive && <IconComponent iconName="Logo" />}
+              {isPast && (
+                <IconComponent iconName="CheckmarkCircleFill" color={useDark ? "textSubtle" : lightColors.textSubtle} />
+              )}
             </Flex>
             <Text color={getTextColor({ eventStatus: status, useDark })} bold>
               {text}
