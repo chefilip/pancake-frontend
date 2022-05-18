@@ -113,10 +113,7 @@ const ActionPanel: React.FunctionComponent<ActionPanelProps> = ({
 
   const { isDesktop } = useMatchBreakpoints()
 
-  const {
-    t,
-    currentLanguage: { locale },
-  } = useTranslation()
+  const { t } = useTranslation()
   const isActive = farm.multiplier !== '0X'
   const { quoteToken, token } = farm
   const lpLabel = farm.lpSymbol && farm.lpSymbol.toUpperCase().replace('PANCAKE', '')
@@ -132,18 +129,6 @@ const ActionPanel: React.FunctionComponent<ActionPanelProps> = ({
     <Container expanded={expanded}>
       <InfoContainer>
         <ValueContainer>
-          {farm.isCommunity && (
-            <ValueWrapper>
-              <Text>{t('Auction Hosting Ends')}</Text>
-              <Text paddingLeft="4px">
-                {new Date(farm.auctionHostingEndDate).toLocaleString(locale, {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </Text>
-            </ValueWrapper>
-          )}
           {!isDesktop && (
             <>
               <ValueWrapper>
